@@ -1,0 +1,107 @@
+@startuml Sequence_Diagram_Toggle_Nilai
+
+title Sequence Diagram - Toggle Visibility Nilai
+
+skinparam sequenceArrowThickness 2
+skinparam participantPadding 15
+
+actor Guru as G #LightGreen
+participant "Browser" as B #LightGray
+participant "NilaiController" as NC #LightBlue
+participant "Ujian Model" as UjM #LightGreen
+database "Database" as DB #Orange
+actor Siswa as S #LightYellow
+
+== 1. Akses Halaman Nilai ==
+
+G -> B : Akses menu Nilai Siswa
+B -> NC : showKelasNilai()
+activate NC
+NC -> DB : SELECT kelas, mapel\nWHERE guru = current_user
+DB --> NC : Kelas & Mapel yang diampu
+NC --> B : return view dengan form filter
+deactivate NC
+B --> G : Tampilkan form pilih kelas & mapel
+
+G -> B : Pilih Kelas & Mapel
+G -> B : Klik "Tampilkan"
+B -> NC : showKelasNilai(Request)
+activate NC
+
+NC -> DB : SELECT siswa.*, nilai.*\nFROM siswas\nJOIN nilai_ujian_pilihan_ganda_siswas\nWHERE kelas = ? AND mapel = ?
+DB --> NC : Data nilai siswa
+
+NC -> DB : SELECT nilai_visible\nFROM ujians\nWHERE mapel = ? AND kelas = ?
+DB --> NC : Status visibility per jenis ujian
+
+NC --> B : return view dengan tabel nilai\n+ status visibility
+deactivate NC
+B --> G : Tampilkan tabel nilai siswa
+
+== 2. Toggle Visibility ==
+
+G -> B : Klik icon toggle\npada kolom "Ujian Harian"
+B -> NC : toggleNilaiVisibility(Request)
+activate NC
+
+note right of NC
+  Request contains:
+  - id_mapel
+  - nama_kelas  
+  - jenis_ujian
+end note
+
+NC -> UjM : where('id_mapel', $mapel)\n->where('nama_kelas', $kelas)\n->where('jenis_ujian', $jenis)\n->first()
+activate UjM
+UjM -> DB : SELECT * FROM ujians WHERE ...
+DB --> UjM : Ujian record
+UjM --> NC : Ujian object
+deactivate UjM
+
+NC -> NC : Toggle nilai_visible
+note right
+  if (ujian->nilai_visible == true)
+    ujian->nilai_visible = false
+  else
+    ujian->nilai_visible = true
+end note
+
+NC -> UjM : update(['nilai_visible' => $newValue])
+activate UjM
+UjM -> DB : UPDATE ujians\nSET nilai_visible = ?\nWHERE id_ujian = ?
+DB --> UjM : Updated
+UjM --> NC : Success
+deactivate UjM
+
+NC --> B : return JSON response\n{'success': true, 'visible': $newValue}
+deactivate NC
+
+B -> B : Update icon via JavaScript
+note right
+  if visible == true:
+    icon = "eye" (hijau)
+  else:
+    icon = "eye-slash" (merah)
+end note
+
+B --> G : Icon berubah\n(nilai sekarang visible/hidden)
+
+== 3. Dampak ke Siswa ==
+
+S -> B : Akses menu Nilai
+B -> NC : showSiswaKelasNilai()
+activate NC
+
+NC -> DB : SELECT nilai, nilai_visible\nFROM nilai_ujian_pilihan_ganda_siswas\nJOIN ujians ON ...
+DB --> NC : Nilai + status visibility
+
+NC --> B : return view
+deactivate NC
+
+alt nilai_visible = true
+    B --> S : Tampilkan nilai:\n"85 - Lulus"
+else nilai_visible = false
+    B --> S : Tampilkan:\n"Tersembunyi"\n(icon eye-slash)
+end
+
+@enduml

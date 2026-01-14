@@ -1,0 +1,90 @@
+@startuml Activity_Diagram_Buat_Ujian
+
+title Activity Diagram - Admin/Guru Membuat Ujian
+
+|#LightGreen|Admin/Guru|
+|#LightBlue|Sistem|
+
+|Admin/Guru|
+start
+:Login ke Sistem;
+:Akses Menu Ujian;
+:Klik "Tambah Ujian";
+
+|Sistem|
+:Load Form Tambah Ujian;
+
+fork
+    :Load Daftar\nMata Pelajaran;
+fork again
+    :Load Daftar Kelas;
+fork again
+    :Load Bank Soal;
+end fork
+
+:Tampilkan Form;
+
+|Admin/Guru|
+:Input Nama Ujian;
+:Pilih Mata Pelajaran;
+:Pilih Kelas\n(bisa multiple);
+:Pilih Jenis Ujian;
+
+note right
+  **Jenis Ujian:**
+  - Ujian Harian
+  - UTS (Ujian Tengah Semester)
+  - UAS (Ujian Akhir Semester)
+end note
+
+:Set Tanggal Mulai;
+:Set Tanggal Selesai;
+:Set Jam Mulai;
+:Set Jam Selesai;
+:Set Durasi (menit);
+:Set KKM;
+:Set Opsi Acak Soal;
+
+fork
+    :Pilih Soal dari Bank Soal;
+fork again
+    if (Perlu Soal Baru?) then (ya)
+        :Klik "Tambah Soal Baru";
+        :Input Pertanyaan;
+        :Input Pilihan A-E;
+        :Pilih Kunci Jawaban;
+        :Set Poin;
+        :Upload Gambar (opsional);
+        :Simpan Soal;
+    else (tidak)
+    endif
+end fork
+
+:Klik "Simpan Ujian";
+
+|Sistem|
+:Validasi Input;
+
+if (Input Valid?) then (ya)
+    :Simpan Data Ujian;
+    :Set nilai_visible = false\n(Default tersembunyi);
+    
+    :Hubungkan Soal ke Ujian\n(pivot table);
+    
+    #LightGreen:Tampilkan Pesan\n"Ujian Berhasil Dibuat";
+    
+    :Redirect ke\nDaftar Ujian;
+else (tidak)
+    #Pink:Tampilkan\nValidation Error;
+    
+    |Admin/Guru|
+    :Perbaiki Input;
+    stop
+endif
+
+|Admin/Guru|
+:Lihat Daftar Ujian;
+
+stop
+
+@enduml

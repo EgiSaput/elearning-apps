@@ -1,0 +1,101 @@
+@startuml Activity_Diagram_Kelola_Nilai
+
+title Activity Diagram - Guru Kelola Nilai Siswa
+
+|#LightGreen|Guru|
+|#LightBlue|Sistem|
+
+|Guru|
+start
+:Login ke Sistem;
+:Akses Menu Nilai Siswa;
+
+|Sistem|
+:Load Kelas yang Diampu;
+:Load Mata Pelajaran\nyang Diampu;
+:Tampilkan Form Filter;
+
+|Guru|
+:Pilih Kelas;
+:Pilih Mata Pelajaran;
+:Klik "Tampilkan";
+
+|Sistem|
+:Query Nilai Siswa\nper Jenis Ujian;
+:Grouping Data:
+- Ujian Harian
+- UTS
+- UAS;
+
+:Tampilkan Tabel Nilai;
+
+note right
+  **Kolom Tabel:**
+  - No
+  - Nama Siswa
+  - Nilai Ujian Harian
+  - Nilai UTS
+  - Nilai UAS
+  - Status Kelulusan
+  - Icon Visibility
+end note
+
+|Guru|
+if (Ingin Toggle Visibility?) then (ya)
+    :Pilih Jenis Ujian;
+    :Klik Icon Toggle;
+    
+    |Sistem|
+    if (Sebelumnya Visible?) then (ya)
+        :Set nilai_visible = false;
+        #LightYellow:Siswa TIDAK BISA\nmelihat nilai;
+    else (tidak / hidden)
+        :Set nilai_visible = true;
+        #LightGreen:Siswa BISA\nmelihat nilai;
+    endif
+    
+    :Update Database;
+    :Refresh Tampilan;
+    :Ubah Icon (eye/eye-slash);
+    
+    |Guru|
+else (tidak)
+endif
+
+if (Ingin Export?) then (ya)
+    :Pilih Format;
+    
+    if (PDF?) then (ya)
+        |Sistem|
+        :Generate PDF;
+    else (Excel)
+        |Sistem|
+        :Generate Excel;
+    endif
+    
+    |Sistem|
+    :Download File;
+    
+    |Guru|
+else (tidak)
+endif
+
+if (Ingin Lihat Detail?) then (ya)
+    :Klik Nama Siswa\natau Icon Detail;
+    
+    |Sistem|
+    :Load Detail Jawaban Siswa;
+    :Tampilkan per Soal:
+    - Pertanyaan
+    - Jawaban Siswa
+    - Kunci Jawaban
+    - Status (Benar/Salah);
+    
+    |Guru|
+    :Review Jawaban Siswa;
+else (tidak)
+endif
+
+stop
+
+@enduml

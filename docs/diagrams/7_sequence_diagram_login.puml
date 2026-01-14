@@ -1,0 +1,82 @@
+@startuml Sequence_Diagram_Login
+
+title Sequence Diagram - Proses Login
+
+skinparam sequenceArrowThickness 2
+skinparam participantPadding 20
+skinparam boxPadding 10
+
+actor User as U #LightYellow
+participant "Browser" as B #LightGray
+participant "AuthController" as AC #LightBlue
+participant "User Model" as UM #LightGreen
+database "Database" as DB #Orange
+
+== Menampilkan Form Login ==
+
+U -> B : Akses /login
+activate B
+B -> AC : showLoginForm()
+activate AC
+AC --> B : return view('auth.login')
+deactivate AC
+B --> U : Tampilkan halaman login
+deactivate B
+
+== Proses Login ==
+
+U -> B : Input username & password
+U -> B : Klik "Login"
+activate B
+B -> AC : login(Request $request)
+activate AC
+
+AC -> AC : validate(request)
+note right
+  Validasi:
+  - username: required
+  - password: required
+end note
+
+alt #Pink Validasi Gagal
+    AC --> B : redirect()->back()->withErrors()
+    B --> U : Tampilkan error validasi
+end
+
+AC -> UM : where('username', $username)->first()
+activate UM
+UM -> DB : SELECT * FROM users\nWHERE username = ?
+activate DB
+DB --> UM : User record / null
+deactivate DB
+UM --> AC : User object / null
+deactivate UM
+
+alt #Pink Username Tidak Ditemukan
+    AC --> B : redirect()->back()\n->with('error', 'Username tidak ditemukan')
+    B --> U : Tampilkan error
+end
+
+AC -> AC : Hash::check($password, $user->password)
+
+alt #Pink Password Salah
+    AC --> B : redirect()->back()\n->with('error', 'Password salah')
+    B --> U : Tampilkan error
+end
+
+AC -> AC : Auth::login($user)
+AC -> AC : $level = $user->level
+
+alt Level = 11 (Admin)
+    AC --> B : redirect('/admin')
+else Level = 12 (Guru)
+    AC --> B : redirect('/guru')
+else Level = 13 (Siswa)
+    AC --> B : redirect('/siswa')
+end
+
+deactivate AC
+B --> U : Tampilkan Dashboard\nsesuai level
+deactivate B
+
+@enduml

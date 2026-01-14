@@ -1,0 +1,100 @@
+@startuml Activity_Diagram_Mengerjakan_Ujian
+
+title Activity Diagram - Siswa Mengerjakan Ujian
+
+|#LightYellow|Siswa|
+|#LightBlue|Sistem|
+
+|Siswa|
+start
+:Login ke Sistem;
+:Akses Menu Ujian;
+
+|Sistem|
+:Tampilkan Daftar Ujian\nSesuai Kelas Siswa;
+:Filter Ujian dalam\nRentang Waktu;
+
+|Siswa|
+:Pilih Ujian;
+:Klik "Ambil Ujian";
+
+|Sistem|
+:Cek Waktu Ujian;
+
+if (Dalam Rentang Waktu?) then (ya)
+    :Simpan Data\nPengambilan Ujian;
+    :Tampilkan Konfirmasi;
+else (tidak)
+    #Pink:Tampilkan Pesan\n"Ujian Tidak Tersedia";
+    |Siswa|
+    stop
+endif
+
+|Siswa|
+:Klik "Mulai Ujian";
+
+|Sistem|
+:Catat Waktu Mulai;
+:Load Soal Ujian;
+
+if (Opsi Acak = Ya?) then (ya)
+    :Randomize Urutan Soal;
+else (tidak)
+    :Tampilkan Urutan Normal;
+endif
+
+:Start Timer Countdown;
+:Tampilkan Soal Pertama;
+
+|Siswa|
+repeat
+    :Baca Soal;
+    :Pilih Jawaban\n(A / B / C / D / E);
+    :Klik "Simpan & Next";
+    
+    |Sistem|
+    :Simpan Jawaban ke Database;
+    :Update Status Navigasi Soal;
+    :Tampilkan Soal Berikutnya;
+    
+    |Siswa|
+repeat while (Masih Ada Soal?\nDAN Waktu Tersisa?) is (ya)
+-> tidak;
+
+|Siswa|
+if (Klik "Selesai"?) then (Manual Submit)
+    :Konfirmasi Submit;
+else (Waktu Habis)
+    |Sistem|
+    :Auto Submit Otomatis;
+endif
+
+|Sistem|
+:Catat Waktu Selesai;
+:Hitung Nilai Otomatis;
+
+note right
+  **Rumus Nilai:**
+  Nilai = (Jawaban Benar × Poin) 
+          / Total Poin × 100
+  
+  **Status:**
+  - Lulus: Nilai >= KKM
+  - Tidak Lulus: Nilai < KKM
+end note
+
+:Simpan Nilai ke Database;
+:Tentukan Status Lulus/Tidak;
+
+if (nilai_visible = true?) then (ya)
+    :Tampilkan Nilai & Detail;
+else (tidak)
+    :Tampilkan "Nilai Tersembunyi"\nMenunggu Guru Menampilkan;
+endif
+
+|Siswa|
+:Lihat Hasil Ujian;
+
+stop
+
+@enduml

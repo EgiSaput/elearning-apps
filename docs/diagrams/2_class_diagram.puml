@@ -1,0 +1,218 @@
+@startuml Class_Diagram_E-Learning
+
+title Class Diagram - Sistem E-Learning CBT
+
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor DarkBlue
+}
+
+' === CLASSES ===
+
+class User {
+    - id_user : int
+    - name : string
+    - username : string
+    - email : string
+    - password : string
+    - level : int
+    - remember_token : string
+    - created_at : timestamp
+    - updated_at : timestamp
+    ..
+    + siswa() : Siswa
+    + guru() : Guru
+}
+
+note right of User
+  Level:
+  11 = Admin
+  12 = Guru
+  13 = Siswa
+end note
+
+class Guru {
+    - nip_guru : string
+    - nama_guru : string
+    - ttl_guru : string
+    - jns_kelamin_guru : string
+    - agama_guru : string
+    - no_telp_guru : string
+    - email_guru : string
+    - alamat_guru : string
+    - jabatan_guru : string
+    - foto_guru : string
+    - status_guru : string
+    - id_user : int
+    ..
+    + user() : User
+    + mataPelajaran() : Collection
+}
+
+class Siswa {
+    - nisn_siswa : string
+    - nama_siswa : string
+    - email_siswa : string
+    - no_hp_siswa : string
+    - ttl_siswa : string
+    - jns_kelamin_siswa : string
+    - alamat_siswa : string
+    - foto_siswa : string
+    - status_siswa : string
+    - id_user : int
+    - id_kelas : int
+    ..
+    + user() : User
+    + kelas() : Kelas
+}
+
+class Kelas {
+    - id : int
+    - nama_kelas : string
+    - created_at : timestamp
+    - updated_at : timestamp
+    ..
+    + siswas() : Collection
+    + mataPelajarans() : Collection
+}
+
+class MataPelajaran {
+    - id_mapel : int
+    - nama_mapel : string
+    - created_at : timestamp
+    - updated_at : timestamp
+    ..
+    + gurus() : Collection
+    + ujians() : Collection
+    + soals() : Collection
+}
+
+class Ujian {
+    - id_ujian : int
+    - nama_ujian : string
+    - jenis_ujian : string
+    - id_mapel : int
+    - nama_kelas : string
+    - durasi : int
+    - tgl_mulai : date
+    - tgl_selesai : date
+    - jam_mulai : time
+    - jam_selesai : time
+    - kkm : int
+    - acak : boolean
+    - nilai_visible : boolean
+    - status : string
+    ..
+    + mataPelajaran() : MataPelajaran
+    + soals() : Collection
+    + nilaiUjians() : Collection
+}
+
+note bottom of Ujian
+  Jenis Ujian:
+  - Ujian Harian
+  - UTS
+  - UAS
+end note
+
+class Soal {
+    - id_soal : int
+    - jenis_soal : string
+    - pertanyaan : text
+    - jwb_a : string
+    - jwb_b : string
+    - jwb_c : string
+    - jwb_d : string
+    - jwb_e : string
+    - kunci : string
+    - gambar : string
+    - poin : int
+    - id_mapel : int
+    ..
+    + mataPelajaran() : MataPelajaran
+    + ujians() : Collection
+}
+
+class SoalHasUjian {
+    - id : int
+    - id_soal : int
+    - id_ujian : int
+}
+
+class SiswaJawabUjianPilihanGanda {
+    - id : int
+    - nisn_siswa : string
+    - id_ujian : int
+    - id_soal : int
+    - jawaban : string
+    - status : string
+    ..
+    + siswa() : Siswa
+    + ujian() : Ujian
+    + soal() : Soal
+}
+
+class NilaiUjianPilihanGandaSiswa {
+    - id_nilai : int
+    - nisn_siswa : string
+    - id_ujian : int
+    - nilai : decimal
+    - waktu_mulai : datetime
+    - waktu_selesai : datetime
+    - status : string
+    ..
+    + siswa() : Siswa
+    + ujian() : Ujian
+}
+
+class Pengumuman {
+    - id_pengumuman : int
+    - judul_pengumuman : string
+    - isi_pengumuman : text
+    - created_at : timestamp
+    - updated_at : timestamp
+}
+
+class GuruMapel {
+    - id : int
+    - nip_guru : string
+    - id_mapel : int
+    - nama_kelas : string
+}
+
+class PengambilanUjian {
+    - id : int
+    - nisn_siswa : string
+    - id_ujian : int
+    - status : string
+    - waktu_ambil : datetime
+    ..
+    + siswa() : Siswa
+    + ujian() : Ujian
+}
+
+' === RELATIONSHIPS ===
+
+User "1" -- "0..1" Siswa
+User "1" -- "0..1" Guru
+Kelas "1" -- "*" Siswa
+Guru "*" -- "*" MataPelajaran
+MataPelajaran "1" -- "*" Ujian
+MataPelajaran "1" -- "*" Soal
+Ujian "*" -- "*" Soal
+Ujian "1" -- "*" SiswaJawabUjianPilihanGanda
+Ujian "1" -- "*" NilaiUjianPilihanGandaSiswa
+Ujian "1" -- "*" PengambilanUjian
+Siswa "1" -- "*" SiswaJawabUjianPilihanGanda
+Siswa "1" -- "*" NilaiUjianPilihanGandaSiswa
+Siswa "1" -- "*" PengambilanUjian
+Soal "1" -- "*" SiswaJawabUjianPilihanGanda
+
+Ujian .. SoalHasUjian
+Soal .. SoalHasUjian
+Guru .. GuruMapel
+MataPelajaran .. GuruMapel
+
+@enduml

@@ -1,0 +1,250 @@
+@startuml Activity_Diagram_Siswa
+
+title Activity Diagram - Siswa
+skinparam ActivityBackgroundColor White
+skinparam ActivityBorderColor Black
+
+|#LightYellow|Siswa|
+|#LightBlue|Sistem|
+
+|Siswa|
+start
+:Buka Halaman Login;
+:Input Username & Password;
+
+|Sistem|
+:Validasi Kredensial;
+
+if (Valid?) then (ya)
+    :Cek Level User;
+    if (Level = 13?) then (ya)
+        :Redirect ke Dashboard Siswa;
+    else (bukan siswa)
+        #Pink:Akses Ditolak;
+        stop
+    endif
+else (tidak)
+    #Pink:Tampilkan Error Login;
+    stop
+endif
+
+|Siswa|
+:Lihat Dashboard Siswa;
+
+repeat
+    :Pilih Menu;
+    
+    switch (Menu yang Dipilih?)
+    
+    case (Lihat Pengumuman)
+        |Sistem|
+        :Load Daftar Pengumuman;
+        |Siswa|
+        :Baca Pengumuman;
+        
+    case (Ujian)
+        |Sistem|
+        :Load Ujian Sesuai Kelas;
+        :Filter Ujian Aktif;
+        :Tampilkan Status Ujian;
+        note right
+          Status:
+          - Tersedia
+          - Sudah Dikerjakan
+          - Belum Dimulai
+          - Sudah Berakhir
+        end note
+        |Siswa|
+        :Lihat Daftar Ujian;
+        
+        if (Pilih Ujian?) then (ya)
+            :Pilih Ujian;
+            :Klik Detail Ujian;
+            |Sistem|
+            :Tampilkan Info Ujian;
+            note right
+              Info:
+              - Nama Ujian
+              - Mata Pelajaran
+              - Durasi
+              - Jumlah Soal
+              - KKM
+              - Waktu Mulai-Selesai
+            end note
+            |Siswa|
+            
+            if (Sudah Dikerjakan?) then (ya)
+                |Sistem|
+                :Load Hasil Ujian;
+                if (nilai_visible = true?) then (ya)
+                    :Tampilkan Nilai & Status;
+                else (tidak)
+                    :Tampilkan "Nilai Tersembunyi";
+                endif
+                |Siswa|
+                :Lihat Hasil;
+            else (belum)
+                if (Dalam Waktu Ujian?) then (ya)
+                    :Klik "Ambil Ujian";
+                    |Sistem|
+                    :Cek Waktu Ujian;
+                    if (Valid?) then (ya)
+                        :Simpan Pengambilan Ujian;
+                        :Tampilkan Konfirmasi;
+                    else (tidak)
+                        #Pink:Tampilkan "Ujian Tidak Tersedia";
+                        |Siswa|
+                        :Kembali ke Daftar;
+                    endif
+                    |Siswa|
+                    
+                    :Klik "Mulai Ujian";
+                    :Konfirmasi Mulai;
+                    |Sistem|
+                    :Catat Waktu Mulai;
+                    :Load Soal Ujian;
+                    if (Acak = Ya?) then (ya)
+                        :Randomize Urutan Soal;
+                    else (tidak)
+                    endif
+                    :Start Timer Countdown;
+                    :Tampilkan Soal Pertama;
+                    |Siswa|
+                    
+                    repeat
+                        :Baca Soal;
+                        :Pilih Jawaban (A/B/C/D/E);
+                        :Klik Simpan / Next;
+                        |Sistem|
+                        :Simpan Jawaban ke DB;
+                        :Update Navigasi Soal;
+                        |Siswa|
+                        :Lihat Soal Berikutnya;
+                    repeat while (Ada Soal & Waktu Tersisa?) is (ya)
+                    -> tidak;
+                    
+                    if (Klik Selesai?) then (Manual Submit)
+                        :Konfirmasi Submit;
+                    else (Waktu Habis)
+                        |Sistem|
+                        :Auto Submit;
+                    endif
+                    
+                    |Sistem|
+                    :Catat Waktu Selesai;
+                    :Hitung Nilai Otomatis;
+                    note right
+                      Rumus:
+                      Nilai = (Benar x Poin) / Total Poin x 100
+                      Status = Nilai >= KKM ? Lulus : Tidak Lulus
+                    end note
+                    :Simpan Nilai;
+                    :Tentukan Status Lulus/Tidak;
+                    
+                    if (nilai_visible = true?) then (ya)
+                        :Tampilkan Nilai & Detail;
+                    else (tidak)
+                        :Tampilkan "Ujian Selesai";
+                        :Info "Nilai Menunggu Diumumkan";
+                    endif
+                    |Siswa|
+                    :Lihat Hasil Ujian;
+                    
+                else (tidak)
+                    |Sistem|
+                    :Tampilkan Status Waktu;
+                    |Siswa|
+                    :Lihat Info Jadwal;
+                endif
+            endif
+        else (tidak)
+        endif
+        
+    case (Lihat Nilai)
+        |Sistem|
+        :Load Nilai per Mapel;
+        :Grouping per Jenis Ujian;
+        |Siswa|
+        :Pilih Mata Pelajaran;
+        |Sistem|
+        :Tampilkan Tabel Nilai;
+        
+        |Siswa|
+        fork
+            :Lihat Nilai Ujian Harian;
+            |Sistem|
+            if (visible?) then (ya)
+                :Tampilkan Nilai;
+            else (tidak)
+                :Tampilkan "Tersembunyi";
+            endif
+        fork again
+            |Siswa|
+            :Lihat Nilai UTS;
+            |Sistem|
+            if (visible?) then (ya)
+                :Tampilkan Nilai;
+            else (tidak)
+                :Tampilkan "Tersembunyi";
+            endif
+        fork again
+            |Siswa|
+            :Lihat Nilai UAS;
+            |Sistem|
+            if (visible?) then (ya)
+                :Tampilkan Nilai;
+            else (tidak)
+                :Tampilkan "Tersembunyi";
+            endif
+        end fork
+        
+        |Siswa|
+        :Lihat Status Kelulusan;
+        
+    case (Edit Profil)
+        |Sistem|
+        :Load Data Profil Siswa;
+        |Siswa|
+        :Edit Data Diri;
+        :Edit Alamat, No HP;
+        :Upload Foto Baru;
+        |Sistem|
+        :Update Profil;
+        :Tampilkan Sukses;
+        |Siswa|
+        
+    case (Ubah Password)
+        |Siswa|
+        :Input Password Lama;
+        :Input Password Baru;
+        :Konfirmasi Password Baru;
+        |Sistem|
+        :Validasi Password Lama;
+        if (Valid?) then (ya)
+            :Update Password;
+            :Tampilkan Sukses;
+        else (tidak)
+            #Pink:Tampilkan Error;
+        endif
+        |Siswa|
+        
+    case (Logout)
+        |Sistem|
+        :Hapus Session;
+        :Redirect ke Login;
+        stop
+        
+    endswitch
+    
+    |Siswa|
+    
+repeat while (Lanjut?) is (ya)
+-> tidak (Logout);
+
+|Sistem|
+:Hapus Session;
+:Redirect ke Login;
+
+stop
+
+@enduml

@@ -1,0 +1,21 @@
+name: Gemini 2 Config
+version: 1.0.0
+schema: v1
+
+models:
+  - name: Gemini 2.0 Flash
+    provider: google-ai
+    model: gemini-2.0-flash
+    apiKey: AIzaSyDre4UDHqlNTpwThLB5qEeB1DRkbzfl0KU
+
+# Agar saran kode otomatis (autocomplete) juga pakai Gemini 2
+tabAutocompleteModel:
+  name: Gemini 2.0 Flash
+  provider: google-ai
+  model: gemini-2.0-flash
+  apiKey: AIzaSyDre4UDHqlNTpwThLB5qEeB1DRkbzfl0KU
+
+contextProviders:
+  - name: code
+  - name: docs
+  - name: terminal

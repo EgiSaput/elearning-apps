@@ -1,0 +1,192 @@
+@startuml Activity_Diagram_Admin
+
+title Activity Diagram - Admin
+skinparam ActivityBackgroundColor White
+skinparam ActivityBorderColor Black
+
+|#LightBlue|Admin|
+|#LightGreen|Sistem|
+
+|Admin|
+start
+:Buka Halaman Login;
+:Input Username & Password;
+
+|Sistem|
+:Validasi Kredensial;
+
+if (Valid?) then (ya)
+    :Cek Level User;
+    if (Level = 11?) then (ya)
+        :Redirect ke Dashboard Admin;
+    else (bukan admin)
+        #Pink:Akses Ditolak;
+        stop
+    endif
+else (tidak)
+    #Pink:Tampilkan Error;
+    stop
+endif
+
+|Admin|
+:Lihat Dashboard Admin;
+
+repeat
+    :Pilih Menu;
+    
+    switch (Menu yang Dipilih?)
+    
+    case (Kelola Guru)
+        |Sistem|
+        :Load Data Guru;
+        |Admin|
+        if (Aksi?) then (Tambah)
+            :Input Data Guru Baru;
+            :Input NIP, Nama, Alamat, No HP;
+            :Upload Foto;
+            |Sistem|
+            :Simpan Data Guru;
+            :Buat Akun User Otomatis;
+        elseif (Edit) then
+            :Pilih Guru;
+            :Edit Data Guru;
+            |Sistem|
+            :Update Data;
+        elseif (Hapus) then
+            :Pilih Guru;
+            :Konfirmasi Hapus;
+            |Sistem|
+            :Hapus Data Guru & Akun;
+        else (Lihat)
+            :Lihat Detail Guru;
+        endif
+        
+    case (Kelola Siswa)
+        |Sistem|
+        :Load Data Siswa;
+        |Admin|
+        if (Aksi?) then (Tambah)
+            :Input Data Siswa Baru;
+            :Input NISN, Nama, Kelas;
+            :Upload Foto;
+            |Sistem|
+            :Simpan Data Siswa;
+            :Buat Akun User Otomatis;
+        elseif (Edit) then
+            :Pilih Siswa;
+            :Edit Data Siswa;
+            |Sistem|
+            :Update Data;
+        elseif (Hapus) then
+            :Pilih Siswa;
+            :Konfirmasi Hapus;
+            |Sistem|
+            :Hapus Data Siswa & Akun;
+        else (Lihat)
+            :Lihat Detail Siswa;
+        endif
+        
+    case (Kelola Kelas)
+        |Sistem|
+        :Load Data Kelas;
+        |Admin|
+        if (Aksi?) then (Tambah)
+            :Input Nama Kelas;
+            |Sistem|
+            :Simpan Data Kelas;
+        elseif (Edit) then
+            :Pilih Kelas;
+            :Edit Nama Kelas;
+            :Assign Guru & Mapel;
+            |Sistem|
+            :Update Data Kelas;
+        else (Hapus)
+            :Konfirmasi Hapus;
+            |Sistem|
+            :Hapus Kelas;
+        endif
+        
+    case (Kelola Mapel)
+        |Sistem|
+        :Load Data Mata Pelajaran;
+        |Admin|
+        if (Aksi?) then (Tambah)
+            :Input Nama Mapel;
+            |Sistem|
+            :Simpan Data Mapel;
+        elseif (Edit) then
+            :Edit Nama Mapel;
+            |Sistem|
+            :Update Data;
+        else (Hapus)
+            :Hapus Mapel;
+        endif
+        
+    case (Kelola Pengumuman)
+        |Sistem|
+        :Load Pengumuman;
+        |Admin|
+        if (Aksi?) then (Tambah)
+            :Input Judul & Isi;
+            |Sistem|
+            :Simpan Pengumuman;
+        elseif (Edit) then
+            :Edit Pengumuman;
+            |Sistem|
+            :Update Pengumuman;
+        else (Hapus)
+            :Hapus Pengumuman;
+        endif
+        
+    case (Kelola User)
+        |Sistem|
+        :Load Semua User;
+        |Admin|
+        if (Aksi?) then (Tambah)
+            :Input Username, Password, Level;
+            |Sistem|
+            :Buat Akun Baru;
+        elseif (Edit) then
+            :Edit Data User;
+            |Sistem|
+            :Update User;
+        elseif (Ubah Password) then
+            :Input Password Baru;
+            |Sistem|
+            :Update Password;
+        else (Hapus)
+            :Hapus User;
+        endif
+        
+    case (Lihat Nilai)
+        |Sistem|
+        :Load Kelas & Mapel;
+        |Admin|
+        :Pilih Kelas & Mapel;
+        |Sistem|
+        :Tampilkan Nilai Siswa;
+        |Admin|
+        :Lihat Rekap Nilai;
+        
+    case (Logout)
+        |Sistem|
+        :Hapus Session;
+        :Redirect ke Login;
+        stop
+        
+    endswitch
+    
+    |Sistem|
+    :Tampilkan Hasil;
+    |Admin|
+    
+repeat while (Lanjut?) is (ya)
+-> tidak (Logout);
+
+|Sistem|
+:Hapus Session;
+:Redirect ke Login;
+
+stop
+
+@enduml

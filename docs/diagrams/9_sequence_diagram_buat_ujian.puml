@@ -1,0 +1,112 @@
+@startuml Sequence_Diagram_Buat_Ujian
+
+title Sequence Diagram - Admin/Guru Membuat Ujian
+
+skinparam sequenceArrowThickness 2
+skinparam participantPadding 15
+
+actor "Admin/Guru" as AG #LightGreen
+participant "Browser" as B #LightGray
+participant "UjianController" as UC #LightBlue
+participant "Ujian Model" as UjM #LightGreen
+participant "Soal Model" as SoM #LightGreen
+participant "SoalHasUjian" as SHU #LightGreen
+database "Database" as DB #Orange
+
+== 1. Akses Form Tambah Ujian ==
+
+AG -> B : Akses menu Ujian
+B -> UC : index()
+activate UC
+UC -> UjM : all() / paginate()
+UjM -> DB : SELECT * FROM ujians
+DB --> UjM : List ujian
+UjM --> UC : Collection
+UC --> B : return view('ujian.index')
+deactivate UC
+B --> AG : Tampilkan daftar ujian
+
+AG -> B : Klik "Tambah Ujian"
+B -> UC : showTambahUjian()
+activate UC
+
+par Load data paralel
+    UC -> DB : SELECT * FROM mata_pelajarans
+    DB --> UC : List mapel
+and
+    UC -> DB : SELECT * FROM kelas
+    DB --> UC : List kelas
+and
+    UC -> DB : SELECT * FROM soals
+    DB --> UC : Bank soal
+end
+
+UC --> B : return view('ujian.tambah',\ncompact('mapels', 'kelas', 'soals'))
+deactivate UC
+B --> AG : Tampilkan form tambah ujian
+
+== 2. Input Data Ujian ==
+
+AG -> B : Isi form ujian
+note right of AG
+  Input:
+  - Nama Ujian
+  - Mata Pelajaran
+  - Kelas (multiple select)
+  - Jenis: Harian/UTS/UAS
+  - Tanggal Mulai & Selesai
+  - Jam Mulai & Selesai
+  - Durasi (menit)
+  - KKM
+  - Acak Soal (checkbox)
+  - Pilih Soal (multiple)
+end note
+
+AG -> B : Klik "Simpan"
+B -> UC : tambah(Request $request)
+activate UC
+
+== 3. Validasi & Simpan ==
+
+UC -> UC : validate($request)
+note right
+  Rules:
+  - nama_ujian: required
+  - id_mapel: required|exists
+  - nama_kelas: required
+  - jenis_ujian: required|in
+  - tgl_mulai: required|date
+  - durasi: required|integer
+  - kkm: required|integer
+  - soal: required|array
+end note
+
+alt #Pink Validasi Gagal
+    UC --> B : redirect()->back()\n->withErrors($validator)\n->withInput()
+    B --> AG : Tampilkan error validasi
+end
+
+UC -> UjM : create($ujianData)
+activate UjM
+UjM -> DB : INSERT INTO ujians\n(nama_ujian, id_mapel, nama_kelas,\njenis_ujian, tgl_mulai, tgl_selesai,\njam_mulai, jam_selesai, durasi, kkm,\nacak, nilai_visible=false)
+DB --> UjM : id_ujian (auto increment)
+UjM --> UC : Ujian object dengan id
+deactivate UjM
+
+== 4. Hubungkan Soal ke Ujian ==
+
+loop Untuk setiap soal yang dipilih
+    UC -> SHU : create([\n  'id_ujian' => $ujian->id_ujian,\n  'id_soal' => $soal_id\n])
+    activate SHU
+    SHU -> DB : INSERT INTO soal_has_ujians\n(id_ujian, id_soal)
+    DB --> SHU : Success
+    SHU --> UC : Pivot created
+    deactivate SHU
+end
+
+UC --> B : redirect()->route('ujian.index')\n->with('success', 'Ujian berhasil dibuat')
+deactivate UC
+
+B --> AG : Tampilkan daftar ujian\ndengan pesan sukses
+
+@enduml

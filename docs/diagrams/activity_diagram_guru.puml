@@ -1,0 +1,220 @@
+@startuml Activity_Diagram_Guru
+
+title Activity Diagram - Guru
+skinparam ActivityBackgroundColor White
+skinparam ActivityBorderColor Black
+
+|#LightGreen|Guru|
+|#LightBlue|Sistem|
+
+|Guru|
+start
+:Buka Halaman Login;
+:Input Username & Password;
+
+|Sistem|
+:Validasi Kredensial;
+
+if (Valid?) then (ya)
+    :Cek Level User;
+    if (Level = 12?) then (ya)
+        :Redirect ke Dashboard Guru;
+    else (bukan guru)
+        #Pink:Akses Ditolak;
+        stop
+    endif
+else (tidak)
+    #Pink:Tampilkan Error;
+    stop
+endif
+
+|Guru|
+:Lihat Dashboard Guru;
+
+repeat
+    :Pilih Menu;
+    
+    switch (Menu yang Dipilih?)
+    
+    case (Lihat Kelas)
+        |Sistem|
+        :Load Kelas yang Diampu;
+        :Load Mapel yang Diajar;
+        |Guru|
+        :Lihat Daftar Kelas & Mapel;
+        
+    case (Kelola Bank Soal)
+        |Sistem|
+        :Load Bank Soal;
+        |Guru|
+        if (Aksi?) then (Tambah Soal)
+            :Pilih Mata Pelajaran;
+            :Input Pertanyaan;
+            :Input Pilihan A, B, C, D, E;
+            :Pilih Kunci Jawaban;
+            :Set Poin Soal;
+            :Upload Gambar (opsional);
+            |Sistem|
+            :Simpan Soal ke Bank Soal;
+        elseif (Edit Soal) then
+            :Pilih Soal;
+            :Edit Data Soal;
+            |Sistem|
+            :Update Soal;
+        elseif (Hapus Soal) then
+            :Pilih Soal;
+            :Konfirmasi Hapus;
+            |Sistem|
+            :Hapus Soal;
+        else (Lihat Detail)
+            :Lihat Detail Soal;
+        endif
+        
+    case (Kelola Ujian)
+        |Sistem|
+        :Load Daftar Ujian;
+        |Guru|
+        if (Aksi?) then (Tambah Ujian)
+            :Input Nama Ujian;
+            :Pilih Mata Pelajaran;
+            :Pilih Kelas Peserta;
+            :Pilih Jenis Ujian;
+            note right
+              Jenis:
+              - Ujian Harian
+              - UTS
+              - UAS
+            end note
+            :Set Tanggal Mulai & Selesai;
+            :Set Jam Mulai & Selesai;
+            :Set Durasi (menit);
+            :Set KKM;
+            :Pilih Opsi Acak Soal;
+            :Pilih Soal dari Bank Soal;
+            |Sistem|
+            :Simpan Data Ujian;
+            :Set nilai_visible = false;
+            :Hubungkan Soal ke Ujian;
+        elseif (Edit Ujian) then
+            :Pilih Ujian;
+            :Edit Data Ujian;
+            |Sistem|
+            :Update Ujian;
+        elseif (Hapus Ujian) then
+            :Konfirmasi Hapus;
+            |Sistem|
+            :Hapus Ujian & Relasi;
+        elseif (Lihat Detail) then
+            |Sistem|
+            :Load Peserta Ujian;
+            :Load Status Pengerjaan;
+            |Guru|
+            :Lihat Daftar Peserta;
+            :Lihat Nilai per Siswa;
+            if (Lihat Jawaban?) then (ya)
+                :Pilih Siswa;
+                |Sistem|
+                :Load Detail Jawaban;
+                |Guru|
+                :Lihat Jawaban Siswa;
+                :Lihat Soal & Kunci;
+                :Lihat Status Benar/Salah;
+            else (tidak)
+            endif
+        else (Hapus Hasil Siswa)
+            :Pilih Siswa;
+            :Konfirmasi Hapus;
+            |Sistem|
+            :Hapus Hasil Ujian Siswa;
+        endif
+        
+    case (Kelola Nilai)
+        |Sistem|
+        :Load Kelas yang Diampu;
+        |Guru|
+        :Pilih Kelas;
+        :Pilih Mata Pelajaran;
+        |Sistem|
+        :Query Nilai per Siswa;
+        :Grouping per Jenis Ujian;
+        :Tampilkan Tabel Nilai;
+        |Guru|
+        :Lihat Rekap Nilai;
+        
+        if (Toggle Visibility?) then (ya)
+            :Pilih Jenis Ujian;
+            :Klik Toggle Show/Hide;
+            |Sistem|
+            if (Sebelumnya Visible?) then (ya)
+                :Set nilai_visible = false;
+                note right: Siswa tidak bisa lihat
+            else (tidak)
+                :Set nilai_visible = true;
+                note right: Siswa bisa lihat nilai
+            endif
+            :Update Database;
+            |Guru|
+        else (tidak)
+        endif
+        
+        if (Export Nilai?) then (ya)
+            :Pilih Format;
+            if (PDF?) then (ya)
+                |Sistem|
+                :Generate PDF;
+            else (Excel)
+                |Sistem|
+                :Generate Excel;
+            endif
+            |Sistem|
+            :Download File;
+            |Guru|
+        else (tidak)
+        endif
+        
+    case (Edit Profil)
+        |Sistem|
+        :Load Data Profil Guru;
+        |Guru|
+        :Edit Data Diri;
+        :Upload Foto Baru;
+        |Sistem|
+        :Update Profil;
+        
+    case (Ubah Password)
+        |Guru|
+        :Input Password Lama;
+        :Input Password Baru;
+        :Konfirmasi Password Baru;
+        |Sistem|
+        :Validasi Password Lama;
+        if (Valid?) then (ya)
+            :Update Password;
+            :Tampilkan Sukses;
+        else (tidak)
+            #Pink:Tampilkan Error;
+        endif
+        |Guru|
+        
+    case (Logout)
+        |Sistem|
+        :Hapus Session;
+        :Redirect ke Login;
+        stop
+        
+    endswitch
+    
+    |Sistem|
+    :Tampilkan Hasil;
+    |Guru|
+    
+repeat while (Lanjut?) is (ya)
+-> tidak (Logout);
+
+|Sistem|
+:Hapus Session;
+:Redirect ke Login;
+
+stop
+
+@enduml

@@ -1,0 +1,55 @@
+@startuml Activity_Diagram_Login
+
+title Activity Diagram - Proses Login
+
+start
+
+:Akses Halaman Login;
+
+:Input Username & Password;
+
+:Klik Tombol Login;
+
+:Validasi Input Form;
+
+if (Input Valid?) then (ya)
+    :Cek Username di Database;
+    
+    if (Username Ditemukan?) then (ya)
+        :Verifikasi Password;
+        
+        if (Password Cocok?) then (ya)
+            :Ambil Level User;
+            :Set Session Login;
+            
+            if (Level = 11?) then (Admin)
+                #LightBlue:Redirect ke\nDashboard Admin;
+            elseif (Level = 12?) then (Guru)
+                #LightGreen:Redirect ke\nDashboard Guru;
+            else (Level = 13 - Siswa)
+                #LightYellow:Redirect ke\nDashboard Siswa;
+            endif
+            
+            :Tampilkan Dashboard;
+            
+        else (tidak)
+            #Pink:Tampilkan Error\n"Password Salah";
+            :Kembali ke Form Login;
+            stop
+        endif
+        
+    else (tidak)
+        #Pink:Tampilkan Error\n"Username Tidak Ditemukan";
+        :Kembali ke Form Login;
+        stop
+    endif
+    
+else (tidak)
+    #Pink:Tampilkan Validation Error;
+    :Perbaiki Input;
+    stop
+endif
+
+stop
+
+@enduml

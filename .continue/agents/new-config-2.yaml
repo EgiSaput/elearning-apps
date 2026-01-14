@@ -1,0 +1,30 @@
+name: Gemini Config1.5
+version: 1.0.0
+schema: v1
+
+models:
+  - title: Gemini 1.5 Pro
+    provider: google-ai
+    model: gemini-1.5-pro
+    apiKey: AIzaSyAEE0hi0pRuGDN0BdeXInjAyigmHBtP5Qk
+
+  - title: Gemini 1.5 Flash
+    provider: google-ai
+    model: gemini-1.5-flash
+    apiKey: AIzaSyAEE0hi0pRuGDN0BdeXInjAyigmHBtP5Qk
+
+  - title: Gemini 2.0 Flash
+    provider: google-ai
+    model: gemini-2.0-flash
+    apiKey: AIzaSyAEE0hi0pRuGDN0BdeXInjAyigmHBtP5Qk
+
+tabAutocompleteModel:
+  title: Gemini 1.5 Flash
+  provider: google-ai
+  model: gemini-1.5-flash
+  apiKey: AIzaSyAEE0hi0pRuGDN0BdeXInjAyigmHBtP5Qk
+
+contextProviders:
+  - name: code
+  - name: docs
+  - name: terminal

@@ -1,0 +1,115 @@
+@startuml Use_Case_Diagram_Sistem_CBT
+
+title Use Case Diagram - Sistem E-Learning CBT
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor<<admin>> LightBlue
+    BackgroundColor<<guru>> LightGreen
+    BackgroundColor<<siswa>> LightYellow
+    BackgroundColor<<shared>> White
+}
+
+' === ACTORS ===
+actor "Admin" as Admin #LightBlue
+actor "Guru" as Guru #LightGreen
+actor "Siswa" as Siswa #LightYellow
+
+' === SYSTEM BOUNDARY ===
+rectangle "Sistem E-Learning CBT (Ujian Online)" {
+    
+    ' --- Authentication (Shared) ---
+    usecase "Login" as UC_Login <<shared>>
+    usecase "Logout" as UC_Logout <<shared>>
+    usecase "Ubah Password" as UC_UbahPassword <<shared>>
+    
+    ' --- Admin Use Cases ---
+    package "Kelola Master Data" <<Rectangle>> {
+        usecase "Kelola User" as UC_KelolaUser <<admin>>
+        usecase "Kelola Guru" as UC_KelolaGuru <<admin>>
+        usecase "Kelola Siswa" as UC_KelolaSiswa <<admin>>
+        usecase "Kelola Kelas" as UC_KelolaKelas <<admin>>
+        usecase "Kelola Mata Pelajaran" as UC_KelolaMapel <<admin>>
+        usecase "Assign Guru ke\nKelas & Mapel" as UC_AssignGuru <<admin>>
+        usecase "Kelola Pengumuman" as UC_KelolaPengumuman <<admin>>
+    }
+    
+    ' --- Guru Use Cases ---
+    package "Kelola Pembelajaran" <<Rectangle>> {
+        usecase "Lihat Kelas Diampu" as UC_LihatKelas <<guru>>
+        usecase "Kelola Bank Soal" as UC_KelolaSoal <<guru>>
+        usecase "Kelola Ujian" as UC_KelolaUjian <<guru>>
+        usecase "Lihat Hasil Ujian" as UC_LihatHasil <<guru>>
+        usecase "Toggle Visibility\nNilai" as UC_ToggleNilai <<guru>>
+        usecase "Export Nilai\n(PDF/Excel)" as UC_ExportNilai <<guru>>
+    }
+    
+    ' --- Siswa Use Cases ---
+    package "Aktivitas Ujian" <<Rectangle>> {
+        usecase "Lihat Pengumuman" as UC_LihatPengumuman <<siswa>>
+        usecase "Lihat Daftar Ujian" as UC_LihatUjian <<siswa>>
+        usecase "Ambil Ujian" as UC_AmbilUjian <<siswa>>
+        usecase "Mulai Ujian" as UC_MulaiUjian <<siswa>>
+        usecase "Kerjakan Ujian" as UC_KerjakanUjian <<siswa>>
+        usecase "Submit Jawaban" as UC_SubmitJawaban <<siswa>>
+        usecase "Lihat Nilai" as UC_LihatNilai <<siswa>>
+        usecase "Edit Profil" as UC_EditProfil <<siswa>>
+    }
+}
+
+' === RELATIONSHIPS ===
+
+' All actors can login/logout
+Admin --> UC_Login
+Guru --> UC_Login
+Siswa --> UC_Login
+
+Admin --> UC_Logout
+Guru --> UC_Logout
+Siswa --> UC_Logout
+
+Admin --> UC_UbahPassword
+Guru --> UC_UbahPassword
+Siswa --> UC_UbahPassword
+
+' Admin relationships
+Admin --> UC_KelolaUser
+Admin --> UC_KelolaGuru
+Admin --> UC_KelolaSiswa
+Admin --> UC_KelolaKelas
+Admin --> UC_KelolaMapel
+Admin --> UC_AssignGuru
+Admin --> UC_KelolaPengumuman
+Admin --> UC_KelolaUjian
+Admin --> UC_KelolaSoal
+
+' Guru relationships
+Guru --> UC_LihatKelas
+Guru --> UC_KelolaSoal
+Guru --> UC_KelolaUjian
+Guru --> UC_LihatHasil
+Guru --> UC_ToggleNilai
+Guru --> UC_ExportNilai
+
+' Siswa relationships
+Siswa --> UC_LihatPengumuman
+Siswa --> UC_LihatUjian
+Siswa --> UC_AmbilUjian
+Siswa --> UC_MulaiUjian
+Siswa --> UC_KerjakanUjian
+Siswa --> UC_SubmitJawaban
+Siswa --> UC_LihatNilai
+Siswa --> UC_EditProfil
+
+' Include relationships
+UC_AmbilUjian ..> UC_LihatUjian : <<include>>
+UC_MulaiUjian ..> UC_AmbilUjian : <<include>>
+UC_KerjakanUjian ..> UC_MulaiUjian : <<include>>
+UC_SubmitJawaban ..> UC_KerjakanUjian : <<include>>
+
+' Extend relationships
+UC_KerjakanUjian <.. UC_SubmitJawaban : <<extend>>\nauto-submit\nsaat waktu habis
+
+@enduml

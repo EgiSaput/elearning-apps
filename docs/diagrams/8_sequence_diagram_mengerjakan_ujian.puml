@@ -1,0 +1,139 @@
+@startuml Sequence_Diagram_Mengerjakan_Ujian
+
+title Sequence Diagram - Siswa Mengerjakan Ujian
+
+skinparam sequenceArrowThickness 2
+skinparam participantPadding 10
+
+actor Siswa as S #LightYellow
+participant "Browser" as B #LightGray
+participant "UjianController" as UC #LightBlue
+participant "SoalController" as SC #LightBlue
+participant "Ujian Model" as UjM #LightGreen
+participant "Soal Model" as SoM #LightGreen
+participant "SiswaJawab Model" as SJM #LightGreen
+participant "NilaiUjian Model" as NM #LightGreen
+database "Database" as DB #Orange
+
+== 1. Lihat Daftar Ujian ==
+
+S -> B : Akses menu Ujian
+B -> UC : index_siswa()
+activate UC
+UC -> DB : SELECT ujians WHERE kelas = siswa.kelas\nAND waktu dalam rentang
+DB --> UC : List ujian tersedia
+UC --> B : return view dengan daftar ujian
+deactivate UC
+B --> S : Tampilkan daftar ujian
+
+== 2. Ambil Ujian ==
+
+S -> B : Klik "Ambil Ujian"
+B -> UC : ambilUjian($id_ujian)
+activate UC
+UC -> UjM : find($id_ujian)
+UjM -> DB : SELECT * FROM ujians WHERE id = ?
+DB --> UjM : Ujian data
+UjM --> UC : Ujian object
+
+UC -> UC : Validasi waktu ujian
+alt #Pink Di luar waktu ujian
+    UC --> B : redirect dengan error
+    B --> S : "Ujian tidak tersedia"
+end
+
+UC --> B : Tampilkan konfirmasi
+deactivate UC
+S -> B : Konfirmasi ambil ujian
+B -> UC : simpanAmbilUjian($id_ujian)
+activate UC
+UC -> DB : INSERT INTO pengambilan_ujians\n(nisn_siswa, id_ujian, status, waktu_ambil)
+UC --> B : redirect ke halaman ujian
+deactivate UC
+
+== 3. Mulai Ujian ==
+
+S -> B : Klik "Mulai Ujian"
+B -> UC : mulaiUjian($id_ujian)
+activate UC
+UC -> UC : Catat waktu_mulai
+
+UC -> SoM : getSoalByUjian($id_ujian)
+SoM -> DB : SELECT soals.* FROM soals\nJOIN soal_has_ujians ON ...
+DB --> SoM : List soal
+SoM --> UC : Collection soal
+
+alt Acak Soal = true
+    UC -> UC : shuffle($soals)
+end
+
+UC --> B : return view dengan soal + timer
+deactivate UC
+B --> S : Tampilkan soal pertama\n+ countdown timer
+
+== 4. Menjawab Soal (Loop) ==
+
+loop Untuk setiap soal
+    S -> B : Pilih jawaban (A/B/C/D/E)
+    S -> B : Klik "Simpan & Next"
+    B -> SC : update($ujian_id, $soal_id, Request)
+    activate SC
+    
+    SC -> SJM : updateOrCreate(\n  ['nisn_siswa', 'id_ujian', 'id_soal'],\n  ['jawaban' => $jawaban]\n)
+    SJM -> DB : INSERT/UPDATE\nsiswa_jawab_ujian_pilihan_gandas
+    DB --> SJM : Success
+    SJM --> SC : Saved
+    
+    SC --> B : return soal berikutnya
+    deactivate SC
+    B --> S : Tampilkan soal berikutnya
+end
+
+== 5. Submit Ujian ==
+
+alt Manual Submit
+    S -> B : Klik "Selesai"
+    S -> B : Konfirmasi submit
+else Auto Submit (Waktu Habis)
+    B -> B : Timer = 0
+    B -> B : Auto trigger submit
+end
+
+B -> UC : submitUjian($id_ujian)
+activate UC
+
+UC -> UC : Catat waktu_selesai
+
+UC -> SJM : where('nisn_siswa', $siswa)\n->where('id_ujian', $ujian)->get()
+SJM -> DB : SELECT jawaban FROM\nsiswa_jawab_ujian_pilihan_gandas
+DB --> SJM : Jawaban siswa
+SJM --> UC : Collection jawaban
+
+UC -> SoM : where ujian->get(['kunci', 'poin'])
+SoM -> DB : SELECT kunci, poin FROM soals
+DB --> SoM : Kunci & poin
+SoM --> UC : Collection kunci
+
+UC -> UC : **Hitung Nilai**
+note right
+  total_benar = 0
+  total_poin = 0
+  
+  foreach soal:
+    total_poin += soal.poin
+    if jawaban == kunci:
+      total_benar += soal.poin
+  
+  nilai = (total_benar / total_poin) * 100
+  status = nilai >= kkm ? 'Lulus' : 'Tidak Lulus'
+end note
+
+UC -> NM : create([\n  'nisn_siswa',\n  'id_ujian',\n  'nilai',\n  'waktu_mulai',\n  'waktu_selesai',\n  'status'\n])
+NM -> DB : INSERT INTO\nnilai_ujian_pilihan_ganda_siswas
+DB --> NM : Saved
+
+UC --> B : return view hasil ujian
+deactivate UC
+B --> S : Tampilkan nilai & status
+
+@enduml
