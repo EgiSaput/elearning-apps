@@ -4,3 +4,8 @@
 Homestead.yaml
 Homestead.json
 .env
+
+/storage/framework/
+/storage/logs/
+/storage/*.key
+/bootstrap/cache/
